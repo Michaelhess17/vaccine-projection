@@ -64,9 +64,9 @@ six==1.15.0
 terminado==0.9.3
 testpath==0.4.4
 tornado==6.1
-traitlets==5.0.5
-typing-extensions==3.7.4.3
-wcwidth==0.2.5
+traitlets
+typing-extensions
+wcwidth
 webencodings==0.5.1
 Werkzeug==1.0.1
 widgetsnbextension==3.5.1
