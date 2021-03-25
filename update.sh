@@ -3,5 +3,8 @@ cd covid-vaccine-tracker-data
 git pull origin master
 cd ..
 wget -O data/us_state_vaccinations.csv https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/vaccinations/us_state_vaccinations.csv
+git add .
+git commit -m "nightly update"
+git push heroku master
 now=$(date)
 echo $now
