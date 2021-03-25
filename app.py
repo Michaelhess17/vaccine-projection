@@ -43,17 +43,36 @@ data.index = pd.Series([datetime(2020, 12, 21) + timedelta(days=k) for k in rang
 pops = pd.read_csv('data/state_pops.csv')
 num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 100))}
 index_to_num = dict(map(reversed, num_to_index.items()))
-xs, ys, zs = np.zeros(data.shape[1]), np.zeros(data.shape[1]), np.zeros(data.shape[1])
+cols = ["total_vaccinations","total_vaccinations_per_hundred", "people_fully_vaccinated","people_fully_vaccinated_per_hundred", "total_distributed","distributed_per_hundred"]
+
+
+def get_data(col, state):
+    if state == None:
+        data = df[['date','location',col]].set_index('date').pivot(columns='location', values=col).fillna(method='ffill').fillna(0)
+    else:
+        data = df[['date','location',col]].set_index('date').pivot(columns='location', values=col).fillna(method='ffill').fillna(0)[state].fillna(0)
+
+    return data
+
+
+xs, ys, zs = np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols)))
 data.fillna(0, inplace=True)
 
+df = pd.read_csv('data/us_state_vaccinations.csv')
 
 def func(x, a, b, c):
     return a + b * x + c * x ** 2
 
-for idx, col in enumerate(data.columns):
-    data[col + 'ma'] = data[col].rolling(window=10).mean().fillna(0)
-    coefs = curve_fit(func, list(range(len(data))), data[col+"ma"], bounds=((-np.inf,-np.inf,0), (np.inf,np.inf,np.inf)))[0]
-    xs[idx], ys[idx], zs[idx] = coefs
+for idy, data_col in enumerate(cols):
+    for idx, col in enumerate(data.columns):
+        if abbrev_us_state[col] not in df.location.to_list():
+            continue
+        ma = get_data(data_col, abbrev_us_state[col]).rolling(window=10).mean().fillna(method='ffill').fillna(0)
+        try:
+            coefs = curve_fit(func, list(range(len(ma))), ma, bounds=((-np.inf,-np.inf,0), (np.inf,np.inf,np.inf)))[0]
+            xs[idx, idy], ys[idx, idy], zs[idx, idy] = coefs
+        except ValueError:
+            print(ma)
 
 most_current = index_to_num[data.index[-1]]
 ds = list(range(most_current, most_current + 50))
@@ -61,9 +80,11 @@ ds_days = [num_to_index[x] for x in ds]
 all_days = np.arange(num_to_index[0], num_to_index[140], timedelta(1))
 
 
-state = 'AK'
+state = 'CA'
+year = 'total_vaccinations'
 idx = np.argmax(data.columns == state)
-extrap = np.poly1d((zs[idx], ys[idx], xs[idx]))
+idy = cols.index(year)
+extrap = np.poly1d((zs[idx, idy], ys[idx, idy], xs[idx, idy]))
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=data.index[:days], y=data[state][:days], mode='lines', name='Data to Date'))
 fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
@@ -133,11 +154,8 @@ fig_map = go.Figure(go.Choropleth(locations=[us_state_abbrev[loc] for loc in np.
 fig_layout = fig_map["layout"]
 fig_data = fig_map["data"]
 
-# fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
-# fig_data[0]["marker"]["color"] = "#2cfec1"
 fig_data[0]["marker"]["opacity"] = 1
 fig_data[0]["marker"]["line"]["width"] = 1.5
-# fig_data[0]["textposition"] = "top center"
 fig_layout["paper_bgcolor"] = "#1f2630"
 fig_layout["plot_bgcolor"] = "#1f2630"
 fig_layout["font"]["color"] = "#2cfec1"
@@ -151,45 +169,6 @@ fig_layout["margin"]["r"] = 50
 fig_layout["margin"]["b"] = 100
 fig_layout["margin"]["l"] = 50
 
-
-
-df_lat_lon = pd.read_csv(
-    os.path.join(APP_PATH, os.path.join("data", "lat_lon_counties.csv"))
-)
-df_lat_lon["FIPS "] = df_lat_lon["FIPS "].apply(lambda x: str(x).zfill(5))
-
-df_full_data = pd.read_csv(
-    os.path.join(
-        APP_PATH, os.path.join("data", "age_adjusted_death_rate_no_quotes.csv")
-    )
-)
-df_full_data["County Code"] = df_full_data["County Code"].apply(
-    lambda x: str(x).zfill(5)
-)
-df_full_data["County"] = (
-    df_full_data["Unnamed: 0"] + ", " + df_full_data.County.map(str)
-)
-
-YEARS = [2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015]
-
-BINS = [
-    "0-2",
-    "2.1-4",
-    "4.1-6",
-    "6.1-8",
-    "8.1-10",
-    "10.1-12",
-    "12.1-14",
-    "14.1-16",
-    "16.1-18",
-    "18.1-20",
-    "20.1-22",
-    "22.1-24",
-    "24.1-26",
-    "26.1-28",
-    "28.1-30",
-    ">30",
-]
 
 DEFAULT_COLORSCALE = [
     "#f2fffb",
@@ -223,7 +202,6 @@ app.layout = html.Div(
         html.Div(
             id="header",
             children=[
-                html.Img(id="logo", src=app.get_asset_url("dash-logo.png")),
                 html.H4(children="US Population Covered by Coronavirus Vaccinations"),
                 html.P(
                     id="description",
@@ -244,20 +222,20 @@ app.layout = html.Div(
                             children=[
                                 html.P(
                                     id="slider-text",
-                                    children="Drag the slider to change the year:",
+                                    children="Choose which metric you are interested in:",
                                 ),
-                                dcc.Slider(
+                                dcc.Dropdown(
                                     id="years-slider",
-                                    min=min(YEARS),
-                                    max=max(YEARS),
-                                    value=min(YEARS),
-                                    marks={
-                                        str(year): {
-                                            "label": str(year),
-                                            "style": {"color": "#7fafdf"},
-                                        }
-                                        for year in YEARS
-                                    },
+                                    options = [
+                                        {"label": "Total Vaccinations", "value":"total_vaccinations"},
+                                        {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
+                                        {"label": "People Fully Vaccinated", "value":"people_fully_vaccinated"},
+                                        {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
+                                        {"label": "Vaccine Distributed", "value":"total_distributed"},
+                                        {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"},
+
+                                        ],
+                                    value="total_vaccinations_per_hundred",
                                 ),
                             ],
                         ),
@@ -265,10 +243,7 @@ app.layout = html.Div(
                             id="heatmap-container",
                             children=[
                                 html.P(
-                                    "Heatmap of age adjusted mortality rates \
-                            from poisonings in year {0}".format(
-                                        min(YEARS)
-                                    ),
+                                    "Heatmap of age adjusted mortality rates min(YEARS)",
                                     id="heatmap-title",
                                 ),
                                 dcc.Graph(
@@ -368,27 +343,21 @@ app.layout = html.Div(
 
 @app.callback(
     Output("county-choropleth", "figure"),
-    [Input("years-slider", "value")],
-    [State("county-choropleth", "figure")],
+    Input("years-slider", "value")
 )
-def display_map(year, figure):
-    for name, x in data.iteritems():
-        try:
-            name = abbrev_us_state[name]
-        except KeyError:
-            pass
+def display_map(year):
+    state = None
+    counter = collections.defaultdict(int)
+    current_data = get_data(year, state)
+    for name, x in current_data.iteritems():
+        print("name1  = ", name)
+        # name = us_state_abbrev[name]
         if len(pops[pops['State'] == name]):
                 counter[name] = np.max(x)
-        # print(counter)
-    for state in counter.keys():
-        if len(pops[pops['State'] == state]):
-            pop_pcts = (pops[pops['State'] == state]['Pop']).item()
-        else:
-            pop_pcts = 1
-        counter[state] /= pop_pcts
+    print(counter)
     fig_map = go.Figure(
-        go.Choropleth(locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], locationmode="USA-states",
-                      z=list(counter.values()), colorscale='tealgrn', colorbar_title="% Covered"),
+        go.Choropleth(locations=[us_state_abbrev[loc] for loc in current_data.columns], locationmode="USA-states",
+                      z=[counter[loc] for loc in current_data.columns], colorscale='tealgrn', colorbar_title="% Covered"),
         layout=go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
                          font={"size": 9, "color": "White"},
                          titlefont={"size": 15, "color": "White"},
@@ -401,11 +370,8 @@ def display_map(year, figure):
     fig_layout = fig_map["layout"]
     fig_data = fig_map["data"]
 
-    # fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
-    # fig_data[0]["marker"]["color"] = "#2cfec1"
     fig_data[0]["marker"]["opacity"] = 1
     fig_data[0]["marker"]["line"]["width"] = 1.5
-    # fig_data[0]["textposition"] = "top center"
     fig_layout["paper_bgcolor"] = "#1f2630"
     fig_layout["plot_bgcolor"] = "#1f2630"
     fig_layout["font"]["color"] = "#2cfec1"
@@ -421,109 +387,16 @@ def display_map(year, figure):
     fig_layout = fig["layout"]
     fig_data = fig["data"]
 
-    # fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
-    # fig_data[0]["marker"]["color"] = "#2cfec1"
-    fig_data[0]["marker"]["opacity"] = 1
-    fig_data[0]["marker"]["line"]["width"] = 1.5
-    # fig_data[0]["textposition"] = "top center"
-    fig_layout["paper_bgcolor"] = "#1f2630"
-    fig_layout["plot_bgcolor"] = "#1f2630"
-    fig_layout["font"]["color"] = "#2cfec1"
-    fig_layout["title"]["font"]["color"] = "#2cfec1"
-    fig_layout["xaxis"]["tickfont"]["color"] = "#2cfec1"
-    fig_layout["yaxis"]["tickfont"]["color"] = "#2cfec1"
-    fig_layout["xaxis"]["gridcolor"] = "#5b5b5b"
-    fig_layout["yaxis"]["gridcolor"] = "#5b5b5b"
-    fig_layout["margin"]["t"] = 75
-    fig_layout["margin"]["r"] = 50
-    fig_layout["margin"]["b"] = 100
-    fig_layout["margin"]["l"] = 50
-
-    # cm = dict(zip(BINS, DEFAULT_COLORSCALE))
-    #
-    # data = [
-    #     dict(
-    #         lat=df_lat_lon["Latitude "],
-    #         lon=df_lat_lon["Longitude"],
-    #         text=df_lat_lon["Hover"],
-    #         type="scattermapbox",
-    #         hoverinfo="text",
-    #         marker=dict(size=5, color="white", opacity=0),
-    #     )
-    # ]
-    #
-    # annotations = [
-    #     dict(
-    #         showarrow=False,
-    #         align="right",
-    #         text="<b>Percent of Population Covered</b>",
-    #         font=dict(color="#2cfec1"),
-    #         bgcolor="#1f2630",
-    #         x=0.95,
-    #         y=0.95,
-    #     )
-    # ]
-    #
-    # for i, bin in enumerate(reversed(BINS)):
-    #     color = cm[bin]
-    #     annotations.append(
-    #         dict(
-    #             arrowcolor=color,
-    #             text=bin,
-    #             x=0.95,
-    #             y=0.85 - (i / 20),
-    #             ax=-60,
-    #             ay=0,
-    #             arrowwidth=5,
-    #             arrowhead=0,
-    #             bgcolor="#1f2630",
-    #             font=dict(color="#2cfec1"),
-    #         )
-    #     )
-    #
-    # if "layout" in figure:
-    #     lat = figure["layout"]["mapbox"]["center"]["lat"]
-    #     lon = figure["layout"]["mapbox"]["center"]["lon"]
-    #     zoom = figure["layout"]["mapbox"]["zoom"]
-    # else:
-    #     lat = 38.72490
-    #     lon = -95.61446
-    #     zoom = 3.5
-    #
-    # layout = dict(
-    #     mapbox=dict(
-    #         layers=[],
-    #         accesstoken=mapbox_access_token,
-    #         style=mapbox_style,
-    #         center=dict(lat=lat, lon=lon),
-    #         zoom=zoom,
-    #     ),
-    #     hovermode="closest",
-    #     margin=dict(r=0, l=0, t=0, b=0),
-    #     annotations=annotations,
-    #     dragmode="lasso",
-    # )
-    #
-    # base_url = "https://raw.githubusercontent.com/jackparmer/mapbox-counties/master/"
-    # for bin in BINS:
-    #     geo_layer = dict(
-    #         sourcetype="geojson",
-    #         source=base_url + str(year) + "/" + bin + ".geojson",
-    #         type="fill",
-    #         color=cm[bin],
-    #         opacity=DEFAULT_OPACITY,
-    #         # CHANGE THIS
-    #         fill=dict(outlinecolor="#afafaf"),
-    #     )
-    #     layout["mapbox"]["layers"].append(geo_layer)
-    #
-    # fig = dict(data=data, layout=layout)
     return fig_map
 
 
 @app.callback(Output("heatmap-title", "children"), [Input("years-slider", "value")])
 def update_map_title(year):
-    return "Heatmap of Population Covered by Vaccine"
+    foo = year.split('_')
+    c = ''
+    for word in foo:
+        c += word[0].upper() + word[1:] + ' '
+    return f"Heatmap of {c}"
 
 
 @app.callback(
@@ -535,9 +408,14 @@ def update_map_title(year):
     ],
 )
 def display_selected_data(selectedData, chart_dropdown, year):
-    state = chart_dropdown
-    idx = np.argmax(data.columns == state)
-    extrap = np.poly1d((zs[idx], ys[idx], xs[idx]))
+    idx = np.argmax(data.columns == chart_dropdown)
+    state = abbrev_us_state[chart_dropdown]
+    countdown = False
+    if year in ['total_vaccinations_per_hundred','total_vaccinations','people_fully_vaccinated','people_fully_vaccinated_per_hundred']:
+        countdown = True
+    current_data = get_data(year, state)
+    idy = cols.index(year)
+    extrap = np.poly1d((zs[idx, idy], ys[idx, idy], xs[idx, idy]))
     fig = go.Figure(layout=go.Layout(font={"size": 9, "color": "White"},
                          titlefont={"size": 15, "color": "White"},
                          geo_scope='usa',
@@ -545,28 +423,29 @@ def display_selected_data(selectedData, chart_dropdown, year):
                          paper_bgcolor='#1f2630',
                          plot_bgcolor='#1f2630',
                          ))
-    fig.add_trace(go.Scatter(x=data.index[:days], y=data[state][:days], mode='lines', name='Data to Date'))
+    fig.add_trace(go.Scatter(x=current_data.index[:days], y=current_data[:days], mode='lines', name='Data to Date'))
     fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
-    pop = pops[pops['State'] == abbrev_us_state[state]]['Pop'].to_numpy()[0]
 
-    time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
-    time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-    t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-    t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
-    fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
-    fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
-    fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
-                             name='Time to 75% immunity'))
-    fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
-                             name='Time to 85% immunity'))
+    if countdown:
+        if 'hundred' in year:
+            pop = 1
+        else:
+            pop = pops[pops['State'] == state]['Pop'].to_numpy()[0]
+        time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
+        time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
+        t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
+        t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
+        fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
+        fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
+        fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
+                                 name='Time to 75% immunity'))
+        fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
+                                 name='Time to 85% immunity'))
     fig_layout = fig_map["layout"]
     fig_data = fig_map["data"]
 
-    # fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
-    # fig_data[0]["marker"]["color"] = "#2cfec1"
     fig_data[0]["marker"]["opacity"] = 1
     fig_data[0]["marker"]["line"]["width"] = 1.5
-    # fig_data[0]["textposition"] = "top center"
     fig_layout["paper_bgcolor"] = "#1f2630"
     fig_layout["plot_bgcolor"] = "#1f2630"
     fig_layout["font"]["color"] = "#2cfec1"
@@ -581,64 +460,6 @@ def display_selected_data(selectedData, chart_dropdown, year):
     fig_layout["margin"]["l"] = 50
     return fig
 
-    # fig = dff.iplot(
-    #     kind="area",
-    #     x="Year",
-    #     y="Age Adjusted Rate",
-    #     text="County",
-    #     categories="County",
-    #     colors=[
-    #         "#1b9e77",
-    #         "#d95f02",
-    #         "#7570b3",
-    #         "#e7298a",
-    #         "#66a61e",
-    #         "#e6ab02",
-    #         "#a6761d",
-    #         "#666666",
-    #         "#1b9e77",
-    #     ],
-    #     vline=[year],
-    #     asFigure=True,
-    # )
-    #
-    # for i, trace in enumerate(fig["data"]):
-    #     trace["mode"] = "lines+markers"
-    #     trace["marker"]["size"] = 4
-    #     trace["marker"]["line"]["width"] = 1
-    #     trace["type"] = "scatter"
-    #     for prop in trace:
-    #         fig["data"][i][prop] = trace[prop]
-    #
-    # # Only show first 500 lines
-    # fig["data"] = fig["data"][0:500]
-    #
-    # fig_layout = fig["layout"]
-    #
-    # # See plot.ly/python/reference
-    # fig_layout["yaxis"]["title"] = "Age-adjusted death rate per county per year"
-    # fig_layout["xaxis"]["title"] = ""
-    # fig_layout["yaxis"]["fixedrange"] = True
-    # fig_layout["xaxis"]["fixedrange"] = False
-    # fig_layout["hovermode"] = "closest"
-    # fig_layout["title"] = "<b>{0}</b> counties selected".format(len(fips))
-    # fig_layout["legend"] = dict(orientation="v")
-    # fig_layout["autosize"] = True
-    # fig_layout["paper_bgcolor"] = "#1f2630"
-    # fig_layout["plot_bgcolor"] = "#1f2630"
-    # fig_layout["font"]["color"] = "#2cfec1"
-    # fig_layout["xaxis"]["tickfont"]["color"] = "#2cfec1"
-    # fig_layout["yaxis"]["tickfont"]["color"] = "#2cfec1"
-    # fig_layout["xaxis"]["gridcolor"] = "#5b5b5b"
-    # fig_layout["yaxis"]["gridcolor"] = "#5b5b5b"
-    #
-    # if len(fips) > 500:
-    #     fig["layout"][
-    #         "title"
-    #     ] = "Age-adjusted death rate per county per year <br>(only 1st 500 shown)"
-    #
-    # return fig
-
-
+    
 if __name__ == "__main__":
     app.run_server(debug=True)
