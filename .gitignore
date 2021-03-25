@@ -1,4 +1,7 @@
 venv
 *.pyc
 .DS_Store
+*.swp
+__pycache__
+*.swo
 .env
