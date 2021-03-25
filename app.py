@@ -41,7 +41,7 @@ data = data.set_index('date')
 data = data.pivot(columns='id', values='value')
 data.index = pd.Series([datetime(2020, 12, 21) + timedelta(days=k) for k in range(len(data))])
 pops = pd.read_csv('data/state_pops.csv')
-num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 100))}
+num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 500))}
 index_to_num = dict(map(reversed, num_to_index.items()))
 cols = ["total_vaccinations","total_vaccinations_per_hundred", "people_fully_vaccinated","people_fully_vaccinated_per_hundred", "total_distributed","distributed_per_hundred"]
 
@@ -55,24 +55,11 @@ def get_data(col, state):
     return data
 
 
-xs, ys, zs = np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols)))
 data.fillna(0, inplace=True)
 
 df = pd.read_csv('data/us_state_vaccinations.csv')
 
-def func(x, a, b, c):
-    return a + b * x + c * x ** 2
-
-for idy, data_col in enumerate(cols):
-    for idx, col in enumerate(data.columns):
-        if abbrev_us_state[col] not in df.location.to_list():
-            continue
-        ma = get_data(data_col, abbrev_us_state[col]).rolling(window=10).mean().fillna(method='ffill').fillna(0)
-        try:
-            coefs = curve_fit(func, list(range(len(ma))), ma, bounds=((-np.inf,-np.inf,0), (np.inf,np.inf,np.inf)))[0]
-            xs[idx, idy], ys[idx, idy], zs[idx, idy] = coefs
-        except ValueError:
-            print(ma)
+xs, ys, zs = np.load('data/xs.npy'), np.load('data/ys.npy'), np.load('data/zs.npy')
 
 most_current = index_to_num[data.index[-1]]
 ds = list(range(most_current, most_current + 50))
@@ -80,34 +67,34 @@ ds_days = [num_to_index[x] for x in ds]
 all_days = np.arange(num_to_index[0], num_to_index[140], timedelta(1))
 
 
-state = 'CA'
-year = 'total_vaccinations'
-idx = np.argmax(data.columns == state)
-idy = cols.index(year)
-extrap = np.poly1d((zs[idx, idy], ys[idx, idy], xs[idx, idy]))
+#state = 'CA'
+#year = 'total_vaccinations'
+#idx = np.argmax(data.columns == state)
+#idy = cols.index(year)
+#extrap = np.poly1d((zs[idx, idy], ys[idx, idy], xs[idx, idy]))
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=data.index[:days], y=data[state][:days], mode='lines', name='Data to Date'))
-fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
-pop = pops[pops['State'] == abbrev_us_state[state]]['Pop'].to_numpy()[0]
-
-time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
-time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
-fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
-fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
-fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
-                         name='Time to 75% immunity'))
-fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
-                         name='Time to 85% immunity'))
-
+#fig.add_trace(go.Scatter(x=data.index[:days], y=data[state][:days], mode='lines', name='Data to Date'))
+#fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
+#pop = pops[pops['State'] == abbrev_us_state[state]]['Pop'].to_numpy()[0]
+#
+#time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
+#time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
+#t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
+#t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
+#fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
+#fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
+#fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
+#                         name='Time to 75% immunity'))
+#fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
+#                         name='Time to 85% immunity'))
+#
 fig_layout = fig["layout"]
-fig_data = fig["data"]
+#fig_data = fig["data"]
 
 # fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
 # fig_data[0]["marker"]["color"] = "#2cfec1"
-fig_data[0]["marker"]["opacity"] = 1
-fig_data[0]["marker"]["line"]["width"] = 1.5
+#fig_data[0]["marker"]["opacity"] = 1
+#fig_data[0]["marker"]["line"]["width"] = 1.5
 # fig_data[0]["textposition"] = "top center"
 fig_layout["paper_bgcolor"] = "#1f2630"
 fig_layout["plot_bgcolor"] = "#1f2630"
@@ -140,15 +127,24 @@ for state in counter.keys():
     else:
         pop_pcts = 1
     counter[state] /= pop_pcts
-fig_map = go.Figure(go.Choropleth(locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], locationmode="USA-states",
-                        z=list(counter.values()), colorscale = 'tealgrn', colorbar_title = "% Covered"),
-            layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
-                                  font = {"size": 9, "color":"White"},
-                                  titlefont = {"size": 15, "color":"White"},
-                                  geo_scope='usa',
-                                  margin={"r":0,"t":40,"l":0,"b":0},
-                                  paper_bgcolor='#4E5D6C',
-                                  plot_bgcolor='#4E5D6C',
+#fig_map = go.Figure(go.Choropleth(locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], locationmode="USA-states", z=list(counter.values()), colorscale = 'tealgrn', colorbar_title = "% Covered"),
+#            layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
+#                                  font = {"size": 9, "color":"White"},
+#                                  titlefont = {"size": 15, "color":"White"},
+#                                  geo_scope='usa',
+#                                  margin={"r":0,"t":40,"l":0,"b":0},
+#                                  paper_bgcolor='#4E5D6C',
+#                                  plot_bgcolor='#4E5D6C',
+#                                  )
+#            )
+fig_map = go.Figure(go.Choropleth(locationmode="USA-states", colorscale = 'tealgrn', colorbar_title = "% Covered"), 
+        layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
+              font = {"size": 9, "color":"White"},
+              titlefont = {"size": 15, "color":"White"},
+              geo_scope='usa',
+              margin={"r":0,"t":40,"l":0,"b":0},
+              paper_bgcolor='#4E5D6C',
+              plot_bgcolor='#4E5D6C',
                                   )
             )
 fig_layout = fig_map["layout"]
@@ -408,6 +404,7 @@ def update_map_title(year):
     ],
 )
 def display_selected_data(selectedData, chart_dropdown, year):
+    print("selectedData = ", selectedData)
     idx = np.argmax(data.columns == chart_dropdown)
     state = abbrev_us_state[chart_dropdown]
     countdown = False
@@ -424,19 +421,25 @@ def display_selected_data(selectedData, chart_dropdown, year):
                          plot_bgcolor='#1f2630',
                          ))
     fig.add_trace(go.Scatter(x=current_data.index[:days], y=current_data[:days], mode='lines', name='Data to Date'))
-    fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
+    
+    if 'hundred' in year:
+        pop = 100
+    else:
+        pop = pops[pops['State'] == state]['Pop'].to_numpy()[0]
+    
+    time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
+    time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
+    t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
+    t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
+    cds = list(range(most_current, round(time_to_max_imm)))
+    cds_days = [num_to_index[x] for x in cds]
+    call_days = np.arange(num_to_index[0], num_to_index[most_current+len(cds)], timedelta(1))
 
-    if countdown:
-        if 'hundred' in year:
-            pop = 1
-        else:
-            pop = pops[pops['State'] == state]['Pop'].to_numpy()[0]
-        time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
-        time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-        t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-        t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
-        fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
-        fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
+
+    fig.add_trace(go.Scatter(x=cds_days, y=extrap(cds), mode='lines', name='Projected Data'))
+    if countdown: 
+        fig.add_trace(go.Scatter(x=call_days, y=[pop * 0.75] * len(call_days), mode='lines', name='75% of Pop.'))
+        fig.add_trace(go.Scatter(x=call_days, y=[pop * 0.85] * len(call_days), mode='lines', name='85% of Pop.'))
         fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
                                  name='Time to 75% immunity'))
         fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
