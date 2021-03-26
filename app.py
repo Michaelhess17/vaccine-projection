@@ -188,7 +188,7 @@ app.layout = html.Div(
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
             ],
-            style={'width': '50%', 'display': 'inline-block', 'margin-right': 250}
+            style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
         ),
         html.Div(id="text-output",
                 children = [
@@ -196,7 +196,7 @@ app.layout = html.Div(
                     id="timeline-text",
                     ),
                 ],
-                style={'width': '35%', 'display': 'inline-block', 'float': 'right'}
+                style={'width': '33%', 'display': 'inline-block', 'float': 'right'}
                 ),
         html.Div(
             id="app-container",
