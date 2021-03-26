@@ -23,15 +23,12 @@ from datetime import timedelta, datetime
 from state_convert import abbrev_us_state, us_state_abbrev
 
 # Initialize app
-
 app = dash.Dash(
     __name__,
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
-    external_stylesheets=[dbc.themes.GRID],
 )
-server = app.server
 
 # Load data
 pd.options.mode.chained_assignment = None
@@ -180,58 +177,51 @@ app.layout = html.Div(
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
             ],
-            #style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
             ), width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1})),
-        dbc.Row([dbc.Col(html.Div(
+        dbc.Row([html.Div(
             id="app-container",
             children=[
-                html.Div(
+                dbc.Col(html.Div(
                     id="left-column",
                     children=[
-                        html.Div(
+                        dbc.Row(dbc.Col(html.Div(
                             id="slider-container",
                             children=[
-                                html.H6(
+                                html.P(
                                     id="slider-text",
                                     children="Choose which metric you are interested in:",
-                                ),
-                                dcc.Dropdown(
-                                    id="years-slider",
-                                    options = [
-                                        {"label": "Total Vaccinations", "value":"total_vaccinations"},
-                                        {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
-                                        {"label": "People Fully Vaccinated", "value":"people_fully_vaccinated"},
-                                        {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
-                                        {"label": "Vaccine Distributed", "value":"total_distributed"},
-                                        {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"},
-
-                                        ],
-                                    value="total_vaccinations_per_hundred",
-                                    style={'bottom-padding': '5rem'},
-                                ), 
-                            ],
-                        ),
-                        html.Div(
+                                )]), width=12)),
+                        dbc.Row(dbc.Col(dcc.Dropdown(
+                            id="years-slider",
+                            options = [
+                            {"label": "Total Vaccinations", "value":"total_vaccinations"},
+                            {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
+                            {"label": "People Fully Vaccinated", "value":"people_fully_vaccinated"},
+                            {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
+                            {"label": "Vaccine Distributed", "value":"total_distributed"},
+                            {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
+                            value="total_vaccinations_per_hundred",
+                            style={'bottom-padding': '5rem'},
+                            ), width=12)), 
+                        dbc.Row(dbc.Col(html.Div(
                             id="heatmap-container",
                             children=[
-                                html.P(
-                                    "Heatmap of age adjusted mortality rates min(YEARS)",
-                                    id="heatmap-title",
-                                ),
+                                #html.P(
+                                #    "Heatmap of age adjusted mortality rates min(YEARS)",
+                                #    id=4heatmap-title",
+                                #),
                                 dcc.Graph(
                                     id="county-choropleth",
                                     figure=fig_map
                                 ),
                             ],
-                        ),
-                    ],
-                )],
-                ), width=6, md=6, sm=12),
+                        ), width=12))]), width=6), 
                 dbc.Col(html.Div(
                     id="graph-container",
                     children=[
-                        html.P(id="chart-selector", children="Select chart:"),
-                        dcc.Dropdown(
+                        dbc.Row(dbc.Col(
+                        html.P(id="chart-selector", children="Select chart:"), width=12)),
+                        dbc.Row(dbc.Col(dcc.Dropdown(
                             options=[{'label': 'AL', 'value': 'AL'},
                                      {'label': 'AK', 'value': 'AK'},
                                      {'label': 'AS', 'value': 'AS'},
@@ -301,24 +291,22 @@ app.layout = html.Div(
                                      {'label': 'WY', 'value': 'WY'}],
                             value="CA",
                             id="chart-dropdown",
-                        ),
-                        dcc.Graph(
+                        ), width=12)),
+                        dbc.Row(dbc.Col(dcc.Graph(
                             id="selected-data",
                             figure=fig,
-                        ),
-                    ],
-                ), width=6, md=6, sm=12),
-            ], no_gutters=True),
-        dbc.Row(dbc.Col(html.Div(id="text-output",
-                children = [
-                html.H4("",
-                    id="timeline-text",
-                    ),
+                        ), width=12)),
                 ],
-                style={'text-align': 'center'}
-                ),width={'size':7, 'offset':2.5},md={'size': 6, 'offset': 3}, sm={'size': 12})),
-    ],
-)
+                ),width=6),
+                ]),], no_gutters=True),
+            dbc.Row(dbc.Col(html.Div(id="text-output",
+                    children = [
+                    html.H4("",
+                    id="timeline-text",
+                    style={'text-align': 'center'},
+                    )]), width={'size': 6, 'offset': 3})),
+        ],
+        )
 
 
 @app.callback(
@@ -370,13 +358,13 @@ def display_map(year):
     return fig_map
 
 
-@app.callback(Output("heatmap-title", "children"), [Input("years-slider", "value")])
-def update_map_title(year):
-    foo = year.split('_')
-    c = ''
-    for word in foo:
-        c += word[0].upper() + word[1:] + ' '
-    return f"Heatmap of {c}"
+#@app.callback(Output("heatmap-title", "children"), [Input("years-slider", "value")])
+#def update_map_title(year):
+#    foo = year.split('_')
+#    c = ''
+#    for word in foo:
+#        c += word[0].upper() + word[1:] + ' '
+#    return f"Heatmap of {c}"
 
 
 @app.callback(
