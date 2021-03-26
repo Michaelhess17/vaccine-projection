@@ -181,7 +181,7 @@ app.layout = html.Div(
                 ),
             ],
             #style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
-            ), width={'size': 6, 'offset': 3})),
+            ), width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1})),
         dbc.Row([dbc.Col(html.Div(
             id="app-container",
             children=[
@@ -226,7 +226,7 @@ app.layout = html.Div(
                         ),
                     ],
                 )],
-                ), width=6),
+                ), width=6, md=6, sm=12),
                 dbc.Col(html.Div(
                     id="graph-container",
                     children=[
@@ -307,8 +307,8 @@ app.layout = html.Div(
                             figure=fig,
                         ),
                     ],
-                ), width=6),
-            ]),
+                ), width=6, md=6, sm=12),
+            ], no_gutters=True),
         dbc.Row(dbc.Col(html.Div(id="text-output",
                 children = [
                 html.H4("",
@@ -316,7 +316,7 @@ app.layout = html.Div(
                     ),
                 ],
                 style={'text-align': 'center'}
-                ),width={'size':6, 'offset':3})),
+                ),width={'size':7, 'offset':2.5},md={'size': 6, 'offset': 3}, sm={'size': 12})),
     ],
 )
 
