@@ -1,7 +1,8 @@
+#!/usr/bin/python
+       
 import os
 import pathlib
 import re
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -67,35 +68,8 @@ ds_days = [num_to_index[x] for x in ds]
 all_days = np.arange(num_to_index[0], num_to_index[140], timedelta(1))
 
 
-#state = 'CA'
-#year = 'total_vaccinations'
-#idx = np.argmax(data.columns == state)
-#idy = cols.index(year)
-#extrap = np.poly1d((zs[idx, idy], ys[idx, idy], xs[idx, idy]))
 fig = go.Figure()
-#fig.add_trace(go.Scatter(x=data.index[:days], y=data[state][:days], mode='lines', name='Data to Date'))
-#fig.add_trace(go.Scatter(x=ds_days, y=extrap(ds), mode='lines', name='Projected Data'))
-#pop = pops[pops['State'] == abbrev_us_state[state]]['Pop'].to_numpy()[0]
-#
-#time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
-#time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-#t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-#t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
-#fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.75] * len(all_days), mode='lines', name='75% of Pop.'))
-#fig.add_trace(go.Scatter(x=all_days, y=[pop * 0.85] * len(all_days), mode='lines', name='85% of Pop.'))
-#fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
-#                         name='Time to 75% immunity'))
-#fig.add_trace(go.Scatter(x=[t_max] * 30, y=np.linspace(0, extrap(time_to_max_imm), 30), mode='lines',
-#                         name='Time to 85% immunity'))
-#
 fig_layout = fig["layout"]
-#fig_data = fig["data"]
-
-# fig_data[0]["text"] = deaths_or_rate_by_fips.values.tolist()
-# fig_data[0]["marker"]["color"] = "#2cfec1"
-#fig_data[0]["marker"]["opacity"] = 1
-#fig_data[0]["marker"]["line"]["width"] = 1.5
-# fig_data[0]["textposition"] = "top center"
 fig_layout["paper_bgcolor"] = "#1f2630"
 fig_layout["plot_bgcolor"] = "#1f2630"
 fig_layout["font"]["color"] = "#2cfec1"
@@ -120,7 +94,6 @@ for name, x in data.iteritems():
         pass
     if len(pops[pops['State']==name]):
         counter[name] = np.max(x)
-    #print(counter)
 for state in counter.keys():
     if len(pops[pops['State']==state]):
         pop_pcts = (pops[pops['State']==state]['Pop']).item()
@@ -137,7 +110,7 @@ for state in counter.keys():
 #                                  plot_bgcolor='#4E5D6C',
 #                                  )
 #            )
-fig_map = go.Figure(go.Choropleth(locationmode="USA-states", colorscale = 'tealgrn', colorbar_title = "% Covered"), 
+fig_map = go.Figure(go.Choropleth(locationmode="USA-states", colorscale = 'tealgrn', colorbar_title = "% Covered", locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], z=[0.5]*len(np.unique(pops['State']))), 
         layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
               font = {"size": 9, "color":"White"},
               titlefont = {"size": 15, "color":"White"},
@@ -185,6 +158,15 @@ DEFAULT_COLORSCALE = [
     "#10523e",
 ]
 
+
+def suffix(d):
+    return 'th' if 11<=d<=13 else {1:'st',2:'nd',3:'rd'}.get(d%10, 'th')
+    
+def custom_strftime(format, t):
+    return t.strftime(format).replace('{S}', str(t.day) + suffix(t.day))
+ 
+
+
 DEFAULT_OPACITY = 0.8
 
 mapbox_access_token = "pk.eyJ1IjoicGxvdGx5bWFwYm94IiwiYSI6ImNrOWJqb2F4djBnMjEzbG50amg0dnJieG4ifQ.Zme1-Uzoi75IaFbieBDl3A"
@@ -198,7 +180,7 @@ app.layout = html.Div(
         html.Div(
             id="header",
             children=[
-                html.H4(children="US Population Covered by Coronavirus Vaccinations"),
+                html.H1(children="US Population Covered by Coronavirus Vaccinations"),
                 html.P(
                     id="description",
                     children="† Joe Biden has promised that all American adults will have access to the Coronavirus "
@@ -206,7 +188,16 @@ app.layout = html.Div(
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
             ],
+            style={'width': '50%', 'display': 'inline-block', 'margin-right': 250}
         ),
+        html.Div(id="text-output",
+                children = [
+                html.H3("",
+                    id="timeline-text",
+                    ),
+                ],
+                style={'width': '35%', 'display': 'inline-block', 'float': 'right'}
+                ),
         html.Div(
             id="app-container",
             children=[
@@ -216,7 +207,7 @@ app.layout = html.Div(
                         html.Div(
                             id="slider-container",
                             children=[
-                                html.P(
+                                html.H6(
                                     id="slider-text",
                                     children="Choose which metric you are interested in:",
                                 ),
@@ -232,7 +223,8 @@ app.layout = html.Div(
 
                                         ],
                                     value="total_vaccinations_per_hundred",
-                                ),
+                                    style={'bottom-padding': '5rem'},
+                                ), 
                             ],
                         ),
                         html.Div(
@@ -329,8 +321,9 @@ app.layout = html.Div(
                             id="selected-data",
                             figure=fig,
                         ),
+                        html.Br(),
                     ],
-                ),
+                ), 
             ],
         ),
     ],
@@ -396,7 +389,8 @@ def update_map_title(year):
 
 
 @app.callback(
-    Output("selected-data", "figure"),
+    [Output("selected-data", "figure"),
+        Output("timeline-text", "children")],
     [
         Input("county-choropleth", "selectedData"),
         Input("chart-dropdown", "value"),
@@ -461,7 +455,10 @@ def display_selected_data(selectedData, chart_dropdown, year):
     fig_layout["margin"]["r"] = 50
     fig_layout["margin"]["b"] = 100
     fig_layout["margin"]["l"] = 50
-    return fig
+    
+    t_str = custom_strftime('%B {S}, %Y', t_max)
+    text = f"Based on current trends, 85% coverage will be reached in {state} by approximately {t_str}, which is in {round(time_to_max_imm)} days."
+    return fig, text
 
     
 if __name__ == "__main__":
