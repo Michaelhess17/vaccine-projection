@@ -100,16 +100,6 @@ for state in counter.keys():
     else:
         pop_pcts = 1
     counter[state] /= pop_pcts
-#fig_map = go.Figure(go.Choropleth(locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], locationmode="USA-states", z=list(counter.values()), colorscale = 'tealgrn', colorbar_title = "% Covered"),
-#            layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
-#                                  font = {"size": 9, "color":"White"},
-#                                  titlefont = {"size": 15, "color":"White"},
-#                                  geo_scope='usa',
-#                                  margin={"r":0,"t":40,"l":0,"b":0},
-#                                  paper_bgcolor='#4E5D6C',
-#                                  plot_bgcolor='#4E5D6C',
-#                                  )
-#            )
 fig_map = go.Figure(go.Choropleth(locationmode="USA-states", colorscale = 'tealgrn', colorbar_title = "% Covered", locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], z=[0.5]*len(np.unique(pops['State']))), 
         layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
               font = {"size": 9, "color":"White"},
@@ -190,14 +180,6 @@ app.layout = html.Div(
             ],
             style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
         ),
-        html.Div(id="text-output",
-                children = [
-                html.H3("",
-                    id="timeline-text",
-                    ),
-                ],
-                style={'width': '33%', 'display': 'inline-block', 'float': 'right'}
-                ),
         html.Div(
             id="app-container",
             children=[
@@ -326,6 +308,15 @@ app.layout = html.Div(
                 ), 
             ],
         ),
+        html.Div(id="text-output",
+                children = [
+                html.H4("",
+                    id="timeline-text",
+                    ),
+                ],
+                style={'width': '40%', 'display': 'inline-block', 'text-align': 'center','margin-left': '33%'}
+        ),
+
     ],
 )
 
