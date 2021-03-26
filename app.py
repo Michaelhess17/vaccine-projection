@@ -6,6 +6,7 @@ import re
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 import pandas as pd
 from dash.dependencies import Input, Output, State
 import cufflinks as cf
@@ -28,6 +29,7 @@ app = dash.Dash(
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
     ],
+    external_stylesheets=[dbc.themes.GRID],
 )
 server = app.server
 
@@ -98,7 +100,7 @@ for state in counter.keys():
     if len(pops[pops['State']==state]):
         pop_pcts = (pops[pops['State']==state]['Pop']).item()
     else:
-        pop_pcts = 1
+        pop_pcts = 100
     counter[state] /= pop_pcts
 fig_map = go.Figure(go.Choropleth(locationmode="USA-states", colorscale = 'tealgrn', colorbar_title = "% Covered", locations=[us_state_abbrev[loc] for loc in np.unique(pops['State'])], z=[0.5]*len(np.unique(pops['State']))), 
         layout = go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
@@ -167,7 +169,7 @@ mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
 app.layout = html.Div(
     id="root",
     children=[
-        html.Div(
+        dbc.Row(dbc.Col(html.Div(
             id="header",
             children=[
                 html.H1(children="US Population Covered by Coronavirus Vaccinations"),
@@ -178,9 +180,9 @@ app.layout = html.Div(
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
             ],
-            style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
-        ),
-        html.Div(
+            #style={'width': '49%', 'display': 'inline-block', 'margin-right': 250}
+            ), width={'size': 6, 'offset': 3})),
+        dbc.Row([dbc.Col(html.Div(
             id="app-container",
             children=[
                 html.Div(
@@ -223,8 +225,9 @@ app.layout = html.Div(
                             ],
                         ),
                     ],
-                ),
-                html.Div(
+                )],
+                ), width=6),
+                dbc.Col(html.Div(
                     id="graph-container",
                     children=[
                         html.P(id="chart-selector", children="Select chart:"),
@@ -303,20 +306,17 @@ app.layout = html.Div(
                             id="selected-data",
                             figure=fig,
                         ),
-                        html.Br(),
                     ],
-                ), 
-            ],
-        ),
-        html.Div(id="text-output",
+                ), width=6),
+            ]),
+        dbc.Row(dbc.Col(html.Div(id="text-output",
                 children = [
                 html.H4("",
                     id="timeline-text",
                     ),
                 ],
-                style={'width': '40%', 'display': 'inline-block', 'text-align': 'center','margin-left': '33%'}
-        ),
-
+                style={'text-align': 'center'}
+                ),width={'size':6, 'offset':3})),
     ],
 )
 
