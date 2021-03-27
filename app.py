@@ -46,7 +46,7 @@ data = data.set_index('date')
 data = data.pivot(columns='id', values='value')
 data.index = pd.Series([datetime(2020, 12, 21) + timedelta(days=k) for k in range(len(data))])
 pops = pd.read_csv('data/state_pops.csv')
-num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 500))}
+num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 1300))}
 index_to_num = dict(map(reversed, num_to_index.items()))
 cols = ["total_vaccinations","total_vaccinations_per_hundred", "people_fully_vaccinated","people_fully_vaccinated_per_hundred", "total_distributed","distributed_per_hundred"]
 
@@ -206,19 +206,17 @@ app.layout = dbc.Container(
                 dbc.Col([
                         html.H6(id="chart-selector", children="Select which state you are interested in:"),
                         dcc.Dropdown(
-                            options=[{'label': 'AL', 'value': 'AL'},
+                            options=[{'label': 'United States', 'value': 'US'},
+                                     {'label': 'AL', 'value': 'AL'},
                                      {'label': 'AK', 'value': 'AK'},
                                      {'label': 'AS', 'value': 'AS'},
                                      {'label': 'AZ', 'value': 'AZ'},
                                      {'label': 'AR', 'value': 'AR'},
-                                     {'label': 'Bureau of Prisons', 'value': 'bureau-of-prisons'},
                                      {'label': 'CA', 'value': 'CA'},
                                      {'label': 'CO', 'value': 'CO'},
                                      {'label': 'CT', 'value': 'CT'},
                                      {'label': 'DE', 'value': 'DE'},
-                                     {'label': 'Dept. of Defense', 'value': 'dept-of-defense'},
                                      {'label': 'DC', 'value': 'DC'},
-                                     {'label': 'Federal Entities', 'value': 'federal-entities'},
                                      {'label': 'FL', 'value': 'FL'},
                                      {'label': 'FM', 'value': 'FM'},
                                      {'label': 'GA', 'value': 'GA'},
@@ -226,7 +224,6 @@ app.layout = dbc.Container(
                                      {'label': 'HI', 'value': 'HI'},
                                      {'label': 'ID', 'value': 'ID'},
                                      {'label': 'IL', 'value': 'IL'},
-                                     {'label': 'Chicago', 'value': 'chicago'},
                                      {'label': 'Indian Health Service', 'value': 'indian-health-service'},
                                      {'label': 'IN', 'value': 'IN'},
                                      {'label': 'IA', 'value': 'IA'},
@@ -248,14 +245,12 @@ app.layout = dbc.Container(
                                      {'label': 'NJ', 'value': 'NJ'},
                                      {'label': 'NM', 'value': 'NM'},
                                      {'label': 'NY', 'value': 'NY'},
-                                     {'label': 'NYC', 'value': 'new-york-city'},
                                      {'label': 'NC', 'value': 'NC'},
                                      {'label': 'ND', 'value': 'ND'},
                                      {'label': 'MP', 'value': 'MP'},
                                      {'label': 'OH', 'value': 'OH'},
                                      {'label': 'OK', 'value': 'OK'},
                                      {'label': 'OR', 'value': 'OR'},
-                                     {'label': 'Unassigned', 'value': 'unassigned'},
                                      {'label': 'PW', 'value': 'PW'},
                                      {'label': 'PA', 'value': 'PA'},
                                      {'label': 'PR', 'value': 'PR'},
@@ -265,7 +260,6 @@ app.layout = dbc.Container(
                                      {'label': 'TN', 'value': 'TN'},
                                      {'label': 'TX', 'value': 'TX'},
                                      {'label': 'UT', 'value': 'UT'},
-                                     {'label': 'Veterans\' Health', 'value': 'veterans-health'},
                                      {'label': 'VT', 'value': 'VT'},
                                      {'label': 'VI', 'value': 'VI'},
                                      {'label': 'VA', 'value': 'VA'},
@@ -273,7 +267,7 @@ app.layout = dbc.Container(
                                      {'label': 'WV', 'value': 'WV'},
                                      {'label': 'WI', 'value': 'WI'},
                                      {'label': 'WY', 'value': 'WY'}],
-                            value="CA",
+                            value="US",
                             id="chart-dropdown",
                         ),
                         dcc.Graph(
@@ -362,8 +356,7 @@ def display_map(year):
     ],
 )
 def display_selected_data(selectedData, chart_dropdown, year):
-    print("selectedData = ", selectedData)
-    idx = np.argmax(data.columns == chart_dropdown)
+    idx = np.argmax(np.array(['US'] + data.columns.to_list()) == chart_dropdown)
     state = abbrev_us_state[chart_dropdown]
     countdown = False
     if year in ['total_vaccinations_per_hundred','total_vaccinations','people_fully_vaccinated','people_fully_vaccinated_per_hundred']:
@@ -384,19 +377,31 @@ def display_selected_data(selectedData, chart_dropdown, year):
     if 'hundred' in year:
         pop = 100
     else:
-        pop = pops[pops['State'] == state]['Pop'].to_numpy()[0]
-    
+        try:
+            pop = pops[pops['State'] == state]['Pop'].to_numpy()[0]
+        except:
+            pop = get_data('total_vaccinations', state).to_list()
+            pop100 = (get_data('total_vaccinations_per_hundred', state)/100).to_list()
+            try:
+                pop = pop[-1]/pop100[-1]
+            except:
+                pop = 100
+                year += 'per_hundred'
     time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
     time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-    t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-    t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
-    cds = list(range(most_current, round(time_to_max_imm)))
-    cds_days = [num_to_index[x] for x in cds]
-    call_days = np.arange(num_to_index[0], num_to_index[most_current+len(cds)], timedelta(1))
-
-
+    print("time_to_max_imm, state, pop  = ", time_to_max_imm, state, pop )
+    if time_to_max_imm < 1000:
+        t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
+        t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
+        cds = list(range(most_current, round(time_to_max_imm)))
+        cds_days = [num_to_index[x] for x in cds]
+        call_days = np.arange(num_to_index[0], num_to_index[most_current+len(cds)], timedelta(1))
+    else:
+        cds = list(range(most_current, most_current+100))
+        cds_days = [num_to_index[x] for x in cds]
+        call_days = np.arange(num_to_index[0], num_to_index[most_current+len(cds)], timedelta(1))
     fig.add_trace(go.Scatter(x=cds_days, y=extrap(cds), mode='lines', name='Projected Data'))
-    if countdown: 
+    if (countdown) & (time_to_max_imm < 1000): 
         fig.add_trace(go.Scatter(x=call_days, y=[pop * 0.75] * len(call_days), mode='lines', name='75% of Pop.'))
         fig.add_trace(go.Scatter(x=call_days, y=[pop * 0.85] * len(call_days), mode='lines', name='85% of Pop.'))
         fig.add_trace(go.Scatter(x=[t_min] * 30, y=np.linspace(0, extrap(time_to_min_imm), 30), mode='lines',
@@ -421,8 +426,12 @@ def display_selected_data(selectedData, chart_dropdown, year):
     fig_layout["margin"]["b"] = 100
     fig_layout["margin"]["l"] = 50
     
-    t_str = custom_strftime('%B {S}, %Y', t_max)
-    text = f"Based on current trends, 85% coverage will be reached in {state} by approximately {t_str}, which is in {round(time_to_max_imm)} days."
+    today = datetime.now()
+    if time_to_max_imm < 1000:
+        t_str = custom_strftime('%B {S}, %Y', t_max)
+        diff = round((t_max-today).days)
+        text = f"Based on current trends, 85% coverage will be reached in {state} by approximately {t_str}, which is in {diff} days."
+    else: text = f""
     return fig, text
 
     

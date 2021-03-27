@@ -29,14 +29,16 @@ def get_data(col, state):
     return data
 
 
-xs, ys, zs = np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols))), np.zeros((data.shape[1], len(cols)))
+xs, ys, zs = np.zeros((data.shape[1]+1, len(cols))), np.zeros((data.shape[1]+1, len(cols))), np.zeros((data.shape[1]+1, len(cols)))
 data.fillna(0, inplace=True)
 
 def func(x, a, b, c):
     return a + b * x + c * x ** 2
 
+states = ['US'] + data.columns.to_list()
+
 for idy, data_col in enumerate(cols):
-    for idx, col in enumerate(data.columns):
+    for idx, col in enumerate(states):
         if abbrev_us_state[col] not in df.location.to_list():
             continue
         ma = get_data(data_col, abbrev_us_state[col]).rolling(window=10).mean().fillna(method='ffill').fillna(0)
