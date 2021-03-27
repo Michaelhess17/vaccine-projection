@@ -168,57 +168,43 @@ mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
 
 # App layout
 
-app.layout = html.Div(
+app.layout = dbc.Container(
     id="root",
     children=[
-        dbc.Row(dbc.Col(dbc.Card(
-            id="header",
-            children=[
+        dbc.Row(
+            dbc.Col([
                 html.H1(children="US Population Covered by Coronavirus Vaccinations"),
                 html.P(
-                    id="description",
-                    children="† Joe Biden has promised that all American adults will have access to the Coronavirus "
+                children="† Joe Biden has promised that all American adults will have access to the Coronavirus "
                              "vaccine by May 1st. In this project, we track the changes in the vaccination rates to "
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
-            ],
-            ), width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1})),
-        dbc.Row([dbc.Col([
-            dbc.Row(dbc.Col(html.Div(
-                        id="slider-container",
-                        children=[
-                            html.P(
-                                id="slider-text",
-                                children="Choose which metric you are interested in:",)]), width=12)),
-            dbc.Row(dbc.Col(dcc.Dropdown(
-                id="years-slider",
-                            options = [
-                            {"label": "Total Vaccinations", "value":"total_vaccinations"},
-                            {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
-                            {"label": "People Fully Vaccinated", "value":"people_fully_vaccinated"},
-                            {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
-                            {"label": "Vaccine Distributed", "value":"total_distributed"},
-                            {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
-                            value="total_vaccinations_per_hundred",
+            ], width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1}), justify='center'),
+        dbc.Row([
+            dbc.Col([
+                html.P(
+                    id="slider-text",
+                    children="Choose which metric you are interested in:",),
+                dcc.Dropdown(
+                    id="years-slider",
+                    options = [
+                    {"label": "Total Vaccinations", "value":"total_vaccinations"},
+                    {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
+                    {"label": "People Fully Vaccinated", "value":"people_fully_vaccinated"},
+                    {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
+                    {"label": "Vaccine Distributed", "value":"total_distributed"},
+                    {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
+                    value="total_vaccinations_per_hundred",
                 style={'bottom-padding': '5rem'},
-                    ), width=12)), 
-            dbc.Row(dbc.Col(dbc.Card(
-                        id="heatmap-container",
-                        children=[
-                                #html.P(
-                                #    "Heatmap of age adjusted mortality rates min(YEARS)",
-                                #    id=4heatmap-title",
-                                #),
-                            dcc.Graph(
-                                id="county-choropleth",
-                                figure=fig_map
-                                ),
+                    ), 
+                dcc.Graph(
+                    id="county-choropleth",
+                    figure=fig_map),
                             ],
-                            ), width=12))], md=6, sm={'size':12, 'offset': 0}), 
+                            xs=10, sm=8, md=5, lg=6, xl=5), 
                 dbc.Col([
-                        dbc.Row(dbc.Col(
-                        html.P(id="chart-selector", children="Select chart:"), width=12)),
-                        dbc.Row(dbc.Col(dcc.Dropdown(
+                        html.P(id="chart-selector", children="Select which state you are interested in:"),
+                        dcc.Dropdown(
                             options=[{'label': 'AL', 'value': 'AL'},
                                      {'label': 'AK', 'value': 'AK'},
                                      {'label': 'AS', 'value': 'AS'},
@@ -288,20 +274,20 @@ app.layout = html.Div(
                                      {'label': 'WY', 'value': 'WY'}],
                             value="CA",
                             id="chart-dropdown",
-                        ), width=12)),
-                        dbc.Row(dbc.Col(dcc.Graph(
+                        ),
+                        dcc.Graph(
                             id="selected-data",
                             figure=fig,
-                        ), width=12)),
+                            style={'margin-bottom': 0})
                 ],
-                md=6, sm={'size':12, 'offset': 0}),
-                ],), # no_gutters=True),
+                xs=10, sm=8, md=5, lg=6, xl=5),
+                ],justify='center'), # no_gutters=True),
             dbc.Row(dbc.Col(html.Div(id="text-output",
                     children = [
                     html.H4("",
                     id="timeline-text",
                     style={'text-align': 'center'},
-                    )]), width={'size': 6, 'offset': 3})),
+                    )]), xs=10, sm=8, md=5, lg=6, xl=5), justify='center'),
         ],
         )
 
