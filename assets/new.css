@@ -1,0 +1,3 @@
+.classForMobile .ui-select-container .ui-select-search, .classForMobile .ui-select-container .ui-select-focusser {
+    visibility: hidden;
+}
