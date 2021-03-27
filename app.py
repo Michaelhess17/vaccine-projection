@@ -173,9 +173,9 @@ app.layout = dbc.Container(
     children=[
         dbc.Row(
             dbc.Col([
-                html.H2(children="US Population Covered by Coronavirus Vaccinations",
+                html.H4(children="US Population Covered by Coronavirus Vaccinations",
                     style={'text-align': 'center'}),
-                html.H5(
+                html.H6(
                 children="† Joe Biden has promised that all American adults will have access to the Coronavirus "
                              "vaccine by May 1st. In this project, we track the changes in the vaccination rates to "
                              "determine if this deadline will be met at the state level for all US states.",
@@ -183,7 +183,7 @@ app.layout = dbc.Container(
             ],  xs=12, sm=10, md=8, lg=8, xl=6), justify='center'),
         dbc.Row([
             dbc.Col([
-                html.P(
+                html.H6(
                     id="slider-text",
                     children="Choose which metric you are interested in:",),
                 dcc.Dropdown(
@@ -204,7 +204,7 @@ app.layout = dbc.Container(
                             ],
                             xs=12, sm=8, md=5, lg=6, xl=5), 
                 dbc.Col([
-                        html.P(id="chart-selector", children="Select which state you are interested in:"),
+                        html.H6(id="chart-selector", children="Select which state you are interested in:"),
                         dcc.Dropdown(
                             options=[{'label': 'AL', 'value': 'AL'},
                                      {'label': 'AK', 'value': 'AK'},
@@ -377,7 +377,7 @@ def display_selected_data(selectedData, chart_dropdown, year):
                          margin={"r": 0, "t": 40, "l": 0, "b": 0},
                          paper_bgcolor='#1f2630',
                          plot_bgcolor='#1f2630',
-                         legend=dict(orientation='h'),
+                         legend=dict(orientation='h', xanchor='center', x=0.5),
                          ))
     fig.add_trace(go.Scatter(x=current_data.index[:days], y=current_data[:days], mode='lines', name='Data to Date'))
     
