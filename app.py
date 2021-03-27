@@ -34,6 +34,7 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.CYBORG],
 )
 
+server = app.server
 # Load data
 pd.options.mode.chained_assignment = None
 path = Path('covid-vaccine-tracker-data/data/')
