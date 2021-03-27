@@ -179,7 +179,7 @@ app.layout = dbc.Container(
                              "vaccine by May 1st. In this project, we track the changes in the vaccination rates to "
                              "determine if this deadline will be met at the state level for all US states.",
                 ),
-            ], width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1}), justify='center'),
+            ],  xs=8, sm=8, md=6, lg=6, xl=5), justify='center'),
         dbc.Row([
             dbc.Col([
                 html.P(
@@ -201,7 +201,7 @@ app.layout = dbc.Container(
                     id="county-choropleth",
                     figure=fig_map),
                             ],
-                            xs=10, sm=8, md=5, lg=6, xl=5), 
+                            xs=12, sm=8, md=5, lg=6, xl=5), 
                 dbc.Col([
                         html.P(id="chart-selector", children="Select which state you are interested in:"),
                         dcc.Dropdown(
@@ -280,15 +280,15 @@ app.layout = dbc.Container(
                             figure=fig,
                             style={'margin-bottom': 0})
                 ],
-                xs=10, sm=8, md=5, lg=6, xl=5),
+                xs=12, sm=8, md=5, lg=6, xl=5),
                 ],justify='center'), # no_gutters=True),
             dbc.Row(dbc.Col(html.Div(id="text-output",
                     children = [
                     html.H4("",
                     id="timeline-text",
                     style={'text-align': 'center'},
-                    )]), xs=10, sm=8, md=5, lg=6, xl=5), justify='center'),
-        ],
+                    )]), xs=12, sm=8, md=5, lg=6, xl=5), justify='center'),
+        ], fluid=True,
         )
 
 app.title = 'Covid-19 Vaccine Projections'
