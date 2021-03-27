@@ -31,6 +31,7 @@ app = dash.Dash(
         {'name': 'description', 'content': 'Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?'},
         {'name': 'title', 'content': 'Covid-19 Vaccine Projections'}
     ],
+    external_stylesheets=[dbc.themes.CYBORG],
 )
 
 # Load data
@@ -181,21 +182,15 @@ app.layout = html.Div(
                 ),
             ],
             ), width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1})),
-        dbc.Row(dbc.Col([dbc.Card(
-            id="app-container",
-            children=[
-                dbc.Col(dbc.Card(
-                    id="left-column",
-                    children=[
-                        dbc.Row(dbc.Col(html.Div(
-                            id="slider-container",
-                            children=[
-                                html.P(
-                                    id="slider-text",
-                                    children="Choose which metric you are interested in:",
-                                )]), width=12)),
-                        dbc.Row(dbc.Col(dcc.Dropdown(
-                            id="years-slider",
+        dbc.Row([dbc.Col([
+            dbc.Row(dbc.Col(html.Div(
+                        id="slider-container",
+                        children=[
+                            html.P(
+                                id="slider-text",
+                                children="Choose which metric you are interested in:",)]), width=12)),
+            dbc.Row(dbc.Col(dcc.Dropdown(
+                id="years-slider",
                             options = [
                             {"label": "Total Vaccinations", "value":"total_vaccinations"},
                             {"label": "Total Vaccinations per Person", "value":"total_vaccinations_per_hundred"},
@@ -204,24 +199,22 @@ app.layout = html.Div(
                             {"label": "Vaccine Distributed", "value":"total_distributed"},
                             {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
                             value="total_vaccinations_per_hundred",
-                            style={'bottom-padding': '5rem'},
-                            ), width=12)), 
-                        dbc.Row(dbc.Col(html.Div(
-                            id="heatmap-container",
-                            children=[
+                style={'bottom-padding': '5rem'},
+                    ), width=12)), 
+            dbc.Row(dbc.Col(dbc.Card(
+                        id="heatmap-container",
+                        children=[
                                 #html.P(
                                 #    "Heatmap of age adjusted mortality rates min(YEARS)",
                                 #    id=4heatmap-title",
                                 #),
-                                dcc.Graph(
-                                    id="county-choropleth",
-                                    figure=fig_map
+                            dcc.Graph(
+                                id="county-choropleth",
+                                figure=fig_map
                                 ),
                             ],
-                            ), width=12))]), lg=6, sm={'size':10, 'offset': 1}), 
-                dbc.Col(html.Div(
-                    id="graph-container",
-                    children=[
+                            ), width=12))], md=6, sm={'size':12, 'offset': 0}), 
+                dbc.Col([
                         dbc.Row(dbc.Col(
                         html.P(id="chart-selector", children="Select chart:"), width=12)),
                         dbc.Row(dbc.Col(dcc.Dropdown(
@@ -300,8 +293,8 @@ app.layout = html.Div(
                             figure=fig,
                         ), width=12)),
                 ],
-                ),width={'size': 6}),#, 'offset': 6}),
-                ]),], width=12), no_gutters=True),
+                md=6, sm={'size':12, 'offset': 0}),
+                ],), # no_gutters=True),
             dbc.Row(dbc.Col(html.Div(id="text-output",
                     children = [
                     html.H4("",
