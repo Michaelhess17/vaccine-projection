@@ -593,7 +593,7 @@ form {
 p,
 ul,
 ol {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
 }
 
 /* Utilities
@@ -663,8 +663,9 @@ hr {
 /* Heatmap
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 #heatmap-container {
-    margin: 2.5rem 0 0 0;
+    /*margin: 2.5rem 0 0 0;*/
     background-color: #252e3f;
+    padding: 3rem;
 }
 
 #heatmap-title {

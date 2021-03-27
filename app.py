@@ -22,11 +22,14 @@ from dateutil.parser import parse
 from datetime import timedelta, datetime
 from state_convert import abbrev_us_state, us_state_abbrev
 
+
 # Initialize app
 app = dash.Dash(
     __name__,
     meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
+        {'name': 'description', 'content': 'Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?'},
+        {'name': 'title', 'content': 'Covid-19 Vaccine Projections'}
     ],
 )
 
@@ -166,7 +169,7 @@ mapbox_style = "mapbox://styles/plotlymapbox/cjvprkf3t1kns1cqjxuxmwixz"
 app.layout = html.Div(
     id="root",
     children=[
-        dbc.Row(dbc.Col(html.Div(
+        dbc.Row(dbc.Col(dbc.Card(
             id="header",
             children=[
                 html.H1(children="US Population Covered by Coronavirus Vaccinations"),
@@ -178,10 +181,10 @@ app.layout = html.Div(
                 ),
             ],
             ), width={'size': 7, 'offset': 2.5}, md={'size': 6, 'offset': 3}, sm={'size':10, 'offset': 1})),
-        dbc.Row([html.Div(
+        dbc.Row(dbc.Col([dbc.Card(
             id="app-container",
             children=[
-                dbc.Col(html.Div(
+                dbc.Col(dbc.Card(
                     id="left-column",
                     children=[
                         dbc.Row(dbc.Col(html.Div(
@@ -215,7 +218,7 @@ app.layout = html.Div(
                                     figure=fig_map
                                 ),
                             ],
-                        ), width=12))]), width=6), 
+                            ), width=12))]), lg=6, sm={'size':10, 'offset': 1}), 
                 dbc.Col(html.Div(
                     id="graph-container",
                     children=[
@@ -297,8 +300,8 @@ app.layout = html.Div(
                             figure=fig,
                         ), width=12)),
                 ],
-                ),width=6),
-                ]),], no_gutters=True),
+                ),width={'size': 6}),#, 'offset': 6}),
+                ]),], width=12), no_gutters=True),
             dbc.Row(dbc.Col(html.Div(id="text-output",
                     children = [
                     html.H4("",
@@ -308,7 +311,7 @@ app.layout = html.Div(
         ],
         )
 
-
+app.title = 'Covid-19 Vaccine Projections'
 @app.callback(
     Output("county-choropleth", "figure"),
     Input("years-slider", "value")
