@@ -22,14 +22,20 @@ from dateutil.parser import parse
 from datetime import timedelta, datetime
 from state_convert import abbrev_us_state, us_state_abbrev
 
-
 # Initialize app
 app = dash.Dash(
     __name__,
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
-        {'name': 'description', 'content': 'Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?'},
-        {'name': 'title', 'content': 'Covid-19 Vaccine Projections'}
+        {'name': 'og:description', 'content': 'Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?'},
+        {'name': 'og:title', 'content': 'Covid-19 Vaccine Projections'},
+        {'name': 'og:image', 'content': 'https://images.pexels.com/photos/3941873/pexels-photo-3941873.jpeg?cs=srgb&dl=pexels-brett-sayles-3941873.jpg&fm=jpg'},
+        {'name': 'og:url', 'content': 'covid-vaccines.app'},
+        {'name': 'author', 'content': 'Michael Hess'},
+        {"name":"twitter:card", "content":"summary_large_image"},
+        {"name": "twitter:description", "content": "Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?"},
+        {'name': 'twitter:image', 'content': 'https://images.pexels.com/photos/3941873/pexels-photo-3941873.jpeg?cs=srgb&dl=pexels-brett-sayles-3941873.jpg&fm=jpg'},
+        {'name': 'twitter:url', 'content': 'covid-vaccines.app'},
     ],
     external_stylesheets=[dbc.themes.CYBORG],
 )
