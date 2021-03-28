@@ -38,10 +38,14 @@ server = app.server
 # Load data
 pd.options.mode.chained_assignment = None
 path = Path('covid-vaccine-tracker-data/data/')
+df = pd.read_csv('data/us_state_vaccinations.csv')
+
+diff = np.max(df['date'].apply(lambda x: parse(x)))- datetime(2020, 12, 21)
+days = diff.days
+
+
 data = pd.read_csv(path / 'historical-usa-doses-administered.csv')
 data.fillna(0, inplace=True)
-diff = parse(data['date'][len(data) - 1]) - parse(data['date'][0])
-days = diff.days
 data = data.set_index('date')
 data = data.pivot(columns='id', values='value')
 data.index = pd.Series([datetime(2020, 12, 21) + timedelta(days=k) for k in range(len(data))])
@@ -62,11 +66,9 @@ def get_data(col, state):
 
 data.fillna(0, inplace=True)
 
-df = pd.read_csv('data/us_state_vaccinations.csv')
-
 xs, ys, zs = np.load('data/xs.npy'), np.load('data/ys.npy'), np.load('data/zs.npy')
 
-most_current = index_to_num[data.index[-1]]
+most_current = index_to_num[np.max([parse(day) for day in df.date])]
 ds = list(range(most_current, most_current + 50))
 ds_days = [num_to_index[x] for x in ds]
 all_days = np.arange(num_to_index[0], num_to_index[140], timedelta(1))
@@ -301,11 +303,11 @@ def display_map(year):
     counter = collections.defaultdict(int)
     current_data = get_data(year, state)
     for name, x in current_data.iteritems():
-        print("name1  = ", name)
+        #print("name1  = ", name)
         # name = us_state_abbrev[name]
         if len(pops[pops['State'] == name]):
                 counter[name] = np.max(x)
-    print(counter)
+    #print(counter)
     fig_map = go.Figure(
         go.Choropleth(locations=[us_state_abbrev[loc] for loc in current_data.columns], locationmode="USA-states",
                       z=[counter[loc] for loc in current_data.columns], colorscale='tealgrn', colorbar_title=f"{char} Covered"),
@@ -377,7 +379,7 @@ def display_selected_data(selectedData, chart_dropdown, year):
                          plot_bgcolor='#1f2630',
                          legend=dict(orientation='h', xanchor='center', x=0.5),
                          ))
-    fig.add_trace(go.Scatter(x=current_data.index[:days], y=current_data[:days], mode='lines', name='Data to Date'))
+    fig.add_trace(go.Scatter(x=current_data.index, y=current_data, mode='lines', name='Data to Date'))
     
     if 'hundred' in year:
         pop = 100
@@ -394,7 +396,7 @@ def display_selected_data(selectedData, chart_dropdown, year):
                 year += 'per_hundred'
     time_to_min_imm = np.max((extrap - (pop * 0.75)).roots)
     time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
-    print("time_to_max_imm, state, pop  = ", time_to_max_imm, state, pop )
+    #print("time_to_max_imm, state, pop  = ", time_to_max_imm, state, pop )
     if time_to_max_imm < 1000:
         t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
         t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
