@@ -197,7 +197,7 @@ app.layout = dbc.Container(
                     {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
                     value="total_vaccinations_per_hundred",
                 style={'bottom-padding': '5rem'},
-                    ), 
+                    searchable=False), 
                 dcc.Graph(
                     id="county-choropleth",
                     figure=fig_map),
@@ -269,6 +269,7 @@ app.layout = dbc.Container(
                                      {'label': 'WY', 'value': 'WY'}],
                             value="US",
                             id="chart-dropdown",
+                            searchable=False
                         ),
                         dcc.Graph(
                             id="selected-data",
@@ -293,6 +294,10 @@ app.title = 'Covid-19 Vaccine Projections'
 )
 def display_map(year):
     state = None
+    if 'hundred' in year:
+        char = '%'
+    else:
+        char = '#'
     counter = collections.defaultdict(int)
     current_data = get_data(year, state)
     for name, x in current_data.iteritems():
@@ -303,7 +308,7 @@ def display_map(year):
     print(counter)
     fig_map = go.Figure(
         go.Choropleth(locations=[us_state_abbrev[loc] for loc in current_data.columns], locationmode="USA-states",
-                      z=[counter[loc] for loc in current_data.columns], colorscale='tealgrn', colorbar_title="% Covered"),
+                      z=[counter[loc] for loc in current_data.columns], colorscale='tealgrn', colorbar_title=f"{char} Covered"),
         layout=go.Layout(geo=dict(bgcolor="#1f2630", lakecolor="#1f2630"),
                          font={"size": 9, "color": "White"},
                          titlefont={"size": 15, "color": "White"},
