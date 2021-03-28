@@ -29,7 +29,7 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
         {'name': 'og:description', 'content': 'Curious when your state will administer enough Covid-19 vaccinations to reach herd-immunity?'},
         {'name': 'og:title', 'content': 'Covid-19 Vaccine Projections'},
-        {'name': 'og:image', 'content': 'http://www.nadadventist.org/sites/default/files/inline-images/iStock-1219398943.jpg'
+        {'name': 'og:image', 'content': 'http://www.nadadventist.org/sites/default/files/inline-images/iStock-1219398943.jpg'},
         {'name': 'og:url', 'content': 'covid-vaccines.app'},
         {'name': 'author', 'content': 'Michael Hess'},
         {"name":"twitter:card", "content":"summary_large_image"},
