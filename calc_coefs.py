@@ -8,6 +8,7 @@ from datetime import datetime,  timedelta
 from state_convert import abbrev_us_state, us_state_abbrev
 
 df = pd.read_csv('data/us_state_vaccinations.csv')
+df = df[df['date'].apply(lambda x: parse(x)) > datetime(2021, 1, 10)]
 cols = ["total_vaccinations","total_vaccinations_per_hundred", "people_fully_vaccinated","people_fully_vaccinated_per_hundred", "total_distributed","distributed_per_hundred"]
 pd.options.mode.chained_assignment = None
 path = Path('covid-vaccine-tracker-data/data/')

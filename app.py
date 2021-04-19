@@ -45,8 +45,8 @@ server = app.server
 pd.options.mode.chained_assignment = None
 path = Path('covid-vaccine-tracker-data/data/')
 df = pd.read_csv('data/us_state_vaccinations.csv')
-
-diff = np.max(df['date'].apply(lambda x: parse(x)))- datetime(2020, 12, 21)
+df = df[df['date'].apply(lambda x: parse(x)) > datetime(2021, 1, 10)]
+diff = np.max(df['date'].apply(lambda x: parse(x)))- datetime(2021, 1, 11)
 days = diff.days
 
 
@@ -56,7 +56,7 @@ data = data.set_index('date')
 data = data.pivot(columns='id', values='value')
 data.index = pd.Series([datetime(2020, 12, 21) + timedelta(days=k) for k in range(len(data))])
 pops = pd.read_csv('data/state_pops.csv')
-num_to_index = {i: datetime(2020, 12, 21) + timedelta(days=k) for i, k in enumerate(range(days + 1300))}
+num_to_index = {i: datetime(2021, 1, 11) + timedelta(days=k) for i, k in enumerate(range(days + 1300))}
 index_to_num = dict(map(reversed, num_to_index.items()))
 cols = ["total_vaccinations","total_vaccinations_per_hundred", "people_fully_vaccinated","people_fully_vaccinated_per_hundred", "total_distributed","distributed_per_hundred"]
 
@@ -203,7 +203,7 @@ app.layout = dbc.Container(
                     {"label": "People Fully Vaccinated per Person", "value":"people_fully_vaccinated_per_hundred"},
                     {"label": "Vaccine Distributed", "value":"total_distributed"},
                     {"label": "Vaccine Distributed per Person", "value":"distributed_per_hundred"}                              ,],
-                    value="total_vaccinations_per_hundred",
+                    value="people_fully_vaccinated_per_hundred",
                 style={'bottom-padding': '5rem'},
                     searchable=False), 
                 dcc.Graph(
@@ -404,8 +404,8 @@ def display_selected_data(selectedData, chart_dropdown, year):
     time_to_max_imm = np.max((extrap - (pop * 0.85)).roots)
     #print("time_to_max_imm, state, pop  = ", time_to_max_imm, state, pop )
     if time_to_max_imm < 1000:
-        t_min = datetime(2020, 12, 21) + timedelta(days=round(time_to_min_imm))
-        t_max = datetime(2020, 12, 21) + timedelta(days=round(time_to_max_imm))
+        t_min = datetime(2021, 1, 11) + timedelta(days=round(time_to_min_imm))
+        t_max = datetime(2021, 1, 11) + timedelta(days=round(time_to_max_imm))
         cds = list(range(most_current, round(time_to_max_imm)))
         cds_days = [num_to_index[x] for x in cds]
         call_days = np.arange(num_to_index[0], num_to_index[most_current+len(cds)], timedelta(1))
